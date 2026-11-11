@@ -1,13 +1,16 @@
-VERSION=1.9.10
+VERSION=1.9.11
 
 [NEW FEATURES]
-Read PocketMC announcements and service notices in the new News page. News syncs in the background, stays cached for offline reading, and can show unread popup notices.
+PocketMC is now available in Simplified Chinese. Switch languages in Settings > Language & Region, or add your own language pack under i18n.
+
+Server downloads now fall back through multiple mirrors (GitHub accelerators and BMCLAPI) and retry automatically, so a blocked or slow network no longer stops an install. Add your own mirror in Settings > Downloads & Mirrors.
+
+PocketMC now recognizes hybrid server software such as Mohist, Arclight, Magma, CatServer, Purpur, Spigot and CraftBukkit when importing or launching an existing server folder.
 
 [IMPROVEMENTS]
-Manage local Ollama models in separate Installed, Download, and Manual tabs. Pull recommended or custom models with progress and cancellation, and delete local models you no longer use.
-PocketMC checks the Playit agent at startup and before connecting. If the runtime is incompatible, PocketMC attempts a verified repair while keeping your saved agent credentials.
-Existing flat settings and version 1 PocketMC backups are converted to the organized format without resetting saved appearance or credentials.
+Forge and Vanilla servers can now be created down to Minecraft 1.7.10.
+
+The Runtimes section is now called Downloads.
 
 [FIXES & STABILITY]
-A window saved as maximized now reopens maximized instead of sometimes opening as a large, normal window.
-Updating settings no longer replaces an existing backdrop, accent color, or wallpaper path with migration defaults.
+Downloads resume from where they stopped and verify hashes after every mirror hop.

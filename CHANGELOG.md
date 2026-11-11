@@ -25,6 +25,32 @@ This changelog is organized from newest to oldest and rewritten from release-to-
 
 ---
 
+## v1.9.11 - Localization, Download Mirrors & Hybrid Server Support
+
+### Summary
+
+v1.9.11 makes the desktop app fully bilingual with a Simplified Chinese interface, adds a mirror-aware download pipeline with user-configurable mirrors, and teaches instance detection and the launcher about hybrid server software (Mohist, Arclight, Magma, CatServer) plus Purpur/Spigot/CraftBukkit. Forge and Vanilla now support Minecraft 1.7.10 and newer.
+
+### Added
+
+- **Localization system**: source-text-as-key catalogs embedded as `Assets/i18n/*.json`, external language packs in `i18n/` next to the executable or `%LOCALAPPDATA%\PocketMC\i18n`, live language switching from Settings > Language & Region, and `en`/`zh-CN` preferences persisted in `AppSettings.Language`.
+- **Simplified Chinese translation** covering the shell, dashboard, instance cards, settings, dialogs, import/export, marketplace, console and setup wizard.
+- **Download mirrors**: `DownloadMirrorHandler` retries downloads through custom mirrors, jsDelivr, GitHub accelerators and BMCLAPI, preserving Range requests and hash verification. Mirrors can be configured in Settings > Downloads & Mirrors or remotely through `download_mirror_tunnels` in `pocketmc.yml`.
+- **Hybrid server detection**: jar-brand detection for Mohist, Arclight, Magma, CatServer, Purpur, Spigot and CraftBukkit, used by import auto-detection and by engine compatibility (mods + plugins in one instance).
+- **Flexible jar launch resolution**: instances no longer need a jar named `server.jar`; the launcher picks the right branded jar and still prefers Forge/NeoForge launch scripts.
+
+### Changed
+
+- The Runtimes section is now labeled Downloads.
+- Forge and Vanilla minimum supported version lowered from 1.8.8 to 1.7.10.
+- Removed accidentally committed build artifacts from the repository and ignored verify-build output paths.
+
+### Tests
+
+- Added localization catalog/service tests, language-switch regression coverage, download mirror candidate/rewrite/cooldown tests, hybrid jar-brand detection tests and jar resolution tests. Full suite: 1119 passing.
+
+---
+
 ## v1.9.10 - Remote News, Ollama Management, Playit Repair & Settings Safety
 
 ### Summary
