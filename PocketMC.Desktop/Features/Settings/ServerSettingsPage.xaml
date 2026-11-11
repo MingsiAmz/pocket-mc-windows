@@ -580,14 +580,24 @@
                                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4"/>
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" MaxWidth="240"/>
+                                                            <ColumnDefinition Width="Auto" MaxWidth="240"/>
+                                                            <ColumnDefinition Width="Auto" MaxWidth="240"/>
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <ComboBox ItemsSource="{Binding VersionUpdates.TargetLoaderVersions}"
+                                                        <ComboBox Width="130"
+                                                                  ItemsSource="{Binding VersionUpdates.LoaderGameVersions}"
+                                                                  SelectedItem="{Binding VersionUpdates.SelectedLoaderGameVersion, Mode=TwoWay}"
+                                                                  DisplayMemberPath="Id"
+                                                                  ToolTip="{loc:Tr 'Minecraft version'}"
+                                                                  Margin="0,0,8,0"/>
+                                                        <ComboBox Grid.Column="1"
+                                                                  Width="150"
+                                                                  ItemsSource="{Binding VersionUpdates.TargetLoaderVersions}"
                                                                   SelectedItem="{Binding VersionUpdates.SelectedTargetLoaderVersion, Mode=TwoWay}"
                                                                   DisplayMemberPath="Version"
+                                                                  ToolTip="{loc:Tr 'Loader build'}"
                                                                   IsEnabled="{Binding VersionUpdates.HasTargetLoaderVersions}"/>
-                                                        <ui:Button Grid.Column="1"
+                                                        <ui:Button Grid.Column="2"
                                                                    Icon="{ui:SymbolIcon ArrowClockwise20}"
                                                                    Appearance="Secondary"
                                                                    Command="{Binding VersionUpdates.LoadTargetVersionsCommand}"

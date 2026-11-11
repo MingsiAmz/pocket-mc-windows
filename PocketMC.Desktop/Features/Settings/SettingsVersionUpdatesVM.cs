@@ -24,9 +24,11 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
     private string _serverDir;
 
     private MinecraftVersion? _selectedTargetVersion;
+    private MinecraftVersion? _selectedLoaderGameVersion;
     private ModLoaderVersion? _selectedTargetLoaderVersion;
     private bool _isBusy;
     private bool _isLoadingTargetVersions;
+    private bool _suppressLoaderReload;
     private bool _isUpdateProgressVisible;
     private bool _isUpdateProgressIndeterminate;
     private double _updateProgressValue;
@@ -52,7 +54,7 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
         _isRunningCheck = isRunningCheck;
         _javaProvisioningService = javaProvisioningService;
         _onUpdateCompleted = onUpdateCompleted;
-        
+
         _targetVersionStatusText = L.T("Checking for available updates...");
 
         LoadTargetVersionsCommand = new AsyncRelayCommand(_ => LoadTargetVersionsAsync(), _ => !IsBusy && !IsLoadingTargetVersions);
@@ -63,6 +65,9 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
     }
 
     public ObservableCollection<MinecraftVersion> TargetVersions { get; } = new();
+
+    /// <summary>Minecraft versions that expose loader builds; drives the loader game-version picker.</summary>
+    public ObservableCollection<MinecraftVersion> LoaderGameVersions { get; } = new();
     public ObservableCollection<ModLoaderVersion> TargetLoaderVersions { get; } = new();
 
     public ICommand LoadTargetVersionsCommand { get; }
@@ -75,6 +80,7 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
     public bool IsUpdateSupported => !_metadata.IsModpack;
 
     public string TargetMinecraftVersion => SelectedTargetVersion?.Id ?? string.Empty;
+    public string TargetLoaderMinecraftVersion => SelectedLoaderGameVersion?.Id ?? string.Empty;
     public string TargetLoaderVersionId => SelectedTargetLoaderVersion?.Version ?? string.Empty;
     public bool HasTargetVersions => TargetVersions.Count > 0;
     public bool HasTargetLoaderVersions => TargetLoaderVersions.Count > 0;
@@ -89,9 +95,28 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
                 OnPropertyChanged(nameof(TargetMinecraftVersion));
                 OnPropertyChanged(nameof(CanApplyMinecraftUpdate));
                 StatusText = (value == null && SelectedTargetLoaderVersion == null)
-                    ? "No target update selected."
-                    : "Ready to update.";
+                    ? L.T("No target update selected.")
+                    : L.T("Ready to update.");
                 CommandManager.InvalidateRequerySuggested();
+            }
+        }
+    }
+
+    public MinecraftVersion? SelectedLoaderGameVersion
+    {
+        get => _selectedLoaderGameVersion;
+        set
+        {
+            if (!SetProperty(ref _selectedLoaderGameVersion, value))
+            {
+                return;
+            }
+
+            OnPropertyChanged(nameof(TargetLoaderMinecraftVersion));
+            OnPropertyChanged(nameof(CanApplyLoaderUpdate));
+            if (!_suppressLoaderReload && !IsLoadingTargetVersions)
+            {
+                _ = LoadLoaderBuildsAsync();
             }
         }
     }
@@ -106,8 +131,8 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
                 OnPropertyChanged(nameof(TargetLoaderVersionId));
                 OnPropertyChanged(nameof(CanApplyLoaderUpdate));
                 StatusText = (value == null && SelectedTargetVersion == null)
-                    ? "No target update selected."
-                    : "Ready to update.";
+                    ? L.T("No target update selected.")
+                    : L.T("Ready to update.");
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -154,7 +179,8 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
         !IsLoadingTargetVersions &&
         !_isRunningCheck() &&
         SelectedTargetLoaderVersion != null &&
-        !string.Equals(CurrentLoaderVersion, TargetLoaderVersionId, StringComparison.OrdinalIgnoreCase);
+        (!string.Equals(CurrentLoaderVersion, TargetLoaderVersionId, StringComparison.OrdinalIgnoreCase) ||
+         !string.Equals(CurrentServerVersion, TargetLoaderMinecraftVersion, StringComparison.OrdinalIgnoreCase));
 
     public bool IsUpdateProgressVisible { get => _isUpdateProgressVisible; set => SetProperty(ref _isUpdateProgressVisible, value); }
     public bool IsUpdateProgressIndeterminate { get => _isUpdateProgressIndeterminate; set => SetProperty(ref _isUpdateProgressIndeterminate, value); }
@@ -177,44 +203,58 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
     private async Task LoadTargetVersionsAsync()
     {
         IsLoadingTargetVersions = true;
-        TargetVersionStatusText = L.F("Checking available {0} updates...", CurrentServerType);
+        TargetVersionStatusText = L.F("Checking available {0} versions...", CurrentServerType);
         StatusText = L.T("Loading target version...");
 
         try
         {
             IReadOnlyList<MinecraftVersion> targets = await _versionTargetService.GetAvailableTargetVersionsAsync(_metadata);
-            IReadOnlyList<ModLoaderVersion> loaderTargets = await _versionTargetService.GetAvailableLoaderVersionsAsync(_metadata);
 
-            TargetVersions.Clear();
-            foreach (MinecraftVersion version in targets)
+            _suppressLoaderReload = true;
+            try
             {
-                TargetVersions.Add(version);
+                TargetVersions.Clear();
+                foreach (MinecraftVersion version in targets)
+                {
+                    TargetVersions.Add(version);
+                }
+
+                LoaderGameVersions.Clear();
+                foreach (MinecraftVersion version in SelectLoaderGameVersions(targets))
+                {
+                    LoaderGameVersions.Add(version);
+                }
+
+                SelectedTargetVersion = TargetVersions.FirstOrDefault(version => IsSameVersion(version.Id, CurrentServerVersion))
+                    ?? TargetVersions.FirstOrDefault();
+                SelectedLoaderGameVersion = LoaderGameVersions.FirstOrDefault(version => IsSameVersion(version.Id, CurrentServerVersion))
+                    ?? LoaderGameVersions.FirstOrDefault();
             }
-
-            TargetLoaderVersions.Clear();
-            foreach (ModLoaderVersion loaderVersion in loaderTargets)
+            finally
             {
-                TargetLoaderVersions.Add(loaderVersion);
+                _suppressLoaderReload = false;
             }
 
             OnPropertyChanged(nameof(HasTargetVersions));
-            OnPropertyChanged(nameof(HasTargetLoaderVersions));
             OnPropertyChanged(nameof(IsEmptyStateVisible));
             OnPropertyChanged(nameof(IsMainContentVisible));
-            SelectedTargetVersion = TargetVersions.FirstOrDefault();
-            SelectedTargetLoaderVersion = TargetLoaderVersions.FirstOrDefault();
-            TargetVersionStatusText = SelectedTargetVersion == null
-                ? L.F("No newer {0} release is available after {1}.", CurrentServerType, CurrentServerVersion)
-                : L.F("{0} available {1} update(s) after {2}. Newest: {3}.", TargetVersions.Count, CurrentServerType, CurrentServerVersion, SelectedTargetVersion.Id);
+
+            await LoadLoaderBuildsAsync();
+
+            TargetVersionStatusText = TargetVersions.Count == 0
+                ? L.F("No {0} versions are available.", CurrentServerType)
+                : L.F("{0} {1} version(s) available. Current: {2}.", TargetVersions.Count, CurrentServerType, CurrentServerVersion);
             StatusText = (SelectedTargetVersion == null && SelectedTargetLoaderVersion == null)
-                ? "No newer target version found."
-                : "Ready to update.";
+                ? L.T("No target update selected.")
+                : L.T("Ready to update.");
         }
         catch (Exception ex)
         {
             TargetVersions.Clear();
+            LoaderGameVersions.Clear();
             TargetLoaderVersions.Clear();
             SelectedTargetVersion = null;
+            SelectedLoaderGameVersion = null;
             SelectedTargetLoaderVersion = null;
             OnPropertyChanged(nameof(HasTargetVersions));
             OnPropertyChanged(nameof(HasTargetLoaderVersions));
@@ -222,11 +262,60 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
             OnPropertyChanged(nameof(IsMainContentVisible));
             TargetVersionStatusText = L.T("Could not load server versions.");
             StatusText = L.T("Version lookup failed.");
-            _dialogService.ShowMessage("Version Lookup Failed", ex.Message, DialogType.Warning);
+            _dialogService.ShowMessage(L.T("Version Lookup Failed"), ex.Message, DialogType.Warning);
         }
         finally
         {
             IsLoadingTargetVersions = false;
+            OnPropertyChanged(nameof(CanApplyMinecraftUpdate));
+            OnPropertyChanged(nameof(CanApplyLoaderUpdate));
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    private async Task LoadLoaderBuildsAsync()
+    {
+        MinecraftVersion? gameVersion = SelectedLoaderGameVersion;
+        if (gameVersion == null)
+        {
+            TargetLoaderVersions.Clear();
+            SelectedTargetLoaderVersion = null;
+            OnPropertyChanged(nameof(HasTargetLoaderVersions));
+            OnPropertyChanged(nameof(IsEmptyStateVisible));
+            OnPropertyChanged(nameof(IsMainContentVisible));
+            return;
+        }
+
+        try
+        {
+            IReadOnlyList<ModLoaderVersion> builds = await _versionTargetService.GetAvailableLoaderVersionsAsync(_metadata, gameVersion.Id);
+
+            // A fast picker switch may finish out of order; ignore stale results.
+            if (!ReferenceEquals(SelectedLoaderGameVersion, gameVersion))
+            {
+                return;
+            }
+
+            TargetLoaderVersions.Clear();
+            foreach (ModLoaderVersion build in builds)
+            {
+                TargetLoaderVersions.Add(build);
+            }
+
+            SelectedTargetLoaderVersion = TargetLoaderVersions.FirstOrDefault(build => string.Equals(build.Version, CurrentLoaderVersion, StringComparison.OrdinalIgnoreCase))
+                ?? TargetLoaderVersions.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            TargetLoaderVersions.Clear();
+            SelectedTargetLoaderVersion = null;
+            _dialogService.ShowMessage(L.T("Version Lookup Failed"), ex.Message, DialogType.Warning);
+        }
+        finally
+        {
+            OnPropertyChanged(nameof(HasTargetLoaderVersions));
+            OnPropertyChanged(nameof(IsEmptyStateVisible));
+            OnPropertyChanged(nameof(IsMainContentVisible));
             OnPropertyChanged(nameof(CanApplyMinecraftUpdate));
             OnPropertyChanged(nameof(CanApplyLoaderUpdate));
             CommandManager.InvalidateRequerySuggested();
@@ -238,7 +327,7 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
         string targetMcVersion = SelectedTargetVersion != null ? TargetMinecraftVersion.Trim() : CurrentServerVersion;
 
         DialogResult confirm = await _dialogService.ShowDialogAsync(
-            "Apply Update",
+            L.T("Apply Update"),
             L.F("Update this server to {0} {1}?\n\nPocketMC will download the necessary files.", CurrentServerType, targetMcVersion),
             DialogType.Question);
 
@@ -253,10 +342,14 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
     private async Task ApplyLoaderUpdateAsync()
     {
         string targetLoaderVersion = SelectedTargetLoaderVersion != null ? TargetLoaderVersionId.Trim() : CurrentLoaderVersion;
+        string targetMcVersion = string.IsNullOrWhiteSpace(TargetLoaderMinecraftVersion) ? CurrentServerVersion : TargetLoaderMinecraftVersion;
+        bool changesMinecraftVersion = !IsSameVersion(targetMcVersion, CurrentServerVersion);
 
         DialogResult confirm = await _dialogService.ShowDialogAsync(
-            "Apply Update",
-            L.F("Update this server's loader to {0}?\n\nPocketMC will download the necessary files.", targetLoaderVersion),
+            L.T("Apply Update"),
+            changesMinecraftVersion
+                ? L.F("Update this server to {0} with loader {1}?\n\nPocketMC will download the necessary files.", targetMcVersion, targetLoaderVersion)
+                : L.F("Update this server's loader to {0}?\n\nPocketMC will download the necessary files.", targetLoaderVersion),
             DialogType.Question);
 
         if (confirm != DialogResult.Yes)
@@ -264,7 +357,7 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
             return;
         }
 
-        await ApplyUpdateInternalAsync(CurrentServerVersion, targetLoaderVersion, false);
+        await ApplyUpdateInternalAsync(targetMcVersion, targetLoaderVersion, changesMinecraftVersion);
     }
 
     private async Task ApplyUpdateInternalAsync(string targetMcVersion, string? targetLoaderVersion, bool isMinecraftUpdate)
@@ -297,7 +390,7 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
                     StatusText = message;
                     ProgressDetailText = message;
                 });
-                
+
             _metadata.MinecraftVersion = result.UpdatedMetadata.MinecraftVersion;
             _metadata.LoaderVersion = result.UpdatedMetadata.LoaderVersion;
             OnPropertyChanged(nameof(CurrentServerVersion));
@@ -323,7 +416,7 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
             IsUpdateProgressIndeterminate = false;
             ProgressDetailText = L.T("Update failed.");
             StatusText = L.T("Update failed.");
-            _dialogService.ShowMessage("Update Failed", ex.Message, DialogType.Error);
+            _dialogService.ShowMessage(L.T("Update Failed"), ex.Message, DialogType.Error);
         }
         finally
         {
@@ -332,6 +425,20 @@ public sealed class SettingsVersionUpdatesVM : ViewModelBase
             OnPropertyChanged(nameof(CanApplyLoaderUpdate));
             CommandManager.InvalidateRequerySuggested();
         }
+    }
+
+    private static IEnumerable<MinecraftVersion> SelectLoaderGameVersions(IReadOnlyList<MinecraftVersion> versions)
+    {
+        MinecraftVersion[] withBuilds = versions
+            .Where(version => version is GameVersionWithLoaders gameVersion && gameVersion.LoaderVersions.Count > 0)
+            .ToArray();
+
+        return withBuilds.Length > 0 ? withBuilds : versions.ToArray();
+    }
+
+    private static bool IsSameVersion(string? left, string? right)
+    {
+        return string.Equals(left?.Trim(), right?.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static string FormatMegabytes(long bytes)
