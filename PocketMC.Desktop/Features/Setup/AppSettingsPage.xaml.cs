@@ -32,6 +32,7 @@ using PocketMC.Desktop.Features.Settings;
 using PocketMC.Desktop.Features.Shell;
 using PocketMC.Desktop.Infrastructure;
 using PocketMC.Infrastructure.Diagnostics;
+using PocketMC.Desktop.Localization;
 
 namespace PocketMC.Desktop.Features.Setup
 {
@@ -270,7 +271,44 @@ namespace PocketMC.Desktop.Features.Setup
             ToggleRemoteControlNotifications.IsChecked = _applicationState.Settings.EnableRemoteControlNotifications;
             ToggleAiSummaryNotifications.IsChecked = _applicationState.Settings.EnableAiSummaryNotifications;
 
+            // Language & Region
+            LoadLanguageOptions();
+
             _isInitializing = false;
+        }
+
+        private void LoadLanguageOptions()
+        {
+            var options = LocalizationService.Instance.Languages.ToList();
+            LanguageCombo.ItemsSource = options;
+
+            var preference = _applicationState.Settings.Language ?? LocalizationService.SystemPreference;
+            LanguageCombo.SelectedItem = options.FirstOrDefault(o => string.Equals(o.Tag, preference, StringComparison.OrdinalIgnoreCase))
+                ?? options.FirstOrDefault(o => string.Equals(o.Tag, LocalizationService.SystemPreference, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || LanguageCombo.SelectedItem is not LanguageOption option) return;
+
+            var settings = _applicationState.Settings;
+            var previous = settings.Language;
+            if (string.Equals(previous, option.Tag, StringComparison.OrdinalIgnoreCase)) return;
+
+            settings.Language = option.Tag;
+            try
+            {
+                _settingsManager.Save(settings);
+            }
+            catch (Exception ex)
+            {
+                settings.Language = previous;
+                _dialogService.ShowMessage(L.T("Settings Error"), ex.Message, DialogType.Error);
+                LoadLanguageOptions();
+                return;
+            }
+
+            LocalizationService.Instance.SetLanguage(option.Tag);
         }
 
         private void AppSettingsPage_Unloaded(object sender, RoutedEventArgs e)

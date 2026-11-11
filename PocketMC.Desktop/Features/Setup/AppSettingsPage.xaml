@@ -4,6 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:loc="clr-namespace:PocketMC.Desktop.Localization"
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="800"
       Title="Settings">
@@ -20,7 +21,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="App Settings"
+                   Text="{loc:Tr App Settings}"
                    FontSize="28"
                    FontWeight="SemiBold"
                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -231,6 +232,34 @@
                                              Checked="ToggleKeepComputerAwakeWhileServersRunning_Changed"
                                              Unchecked="ToggleKeepComputerAwakeWhileServersRunning_Changed"/>
                         </Grid>
+                    </StackPanel>
+                </ui:CardExpander>
+
+                <ui:CardExpander IsExpanded="False" Icon="{ui:SymbolIcon Globe24}" Margin="0,0,0,12">
+                    <ui:CardExpander.Header>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{loc:Tr 'Language &amp; Region'}" FontSize="16" FontWeight="SemiBold"/>
+                                <TextBlock Text="{loc:Tr 'Choose the interface language for PocketMC.'}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </ui:CardExpander.Header>
+
+                    <StackPanel Margin="16,8,16,16">
+                        <TextBlock Text="{loc:Tr Language}" FontSize="14" FontWeight="Medium"/>
+                        <TextBlock Text="{loc:Tr 'Some pages are still being translated and may appear in English.'}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   FontSize="12"
+                                   Margin="0,4,0,8"
+                                   TextWrapping="Wrap"/>
+                        <ComboBox x:Name="LanguageCombo"
+                                  MinWidth="220"
+                                  HorizontalAlignment="Left"
+                                  DisplayMemberPath="DisplayName"
+                                  SelectionChanged="LanguageCombo_SelectionChanged"/>
                     </StackPanel>
                 </ui:CardExpander>
 

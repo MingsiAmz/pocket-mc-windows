@@ -27,6 +27,8 @@ namespace PocketMC.Domain.Models
         public bool MinimizeToTrayOnClose { get; set; }
         public bool KeepComputerAwakeWhileServersRunning { get; set; } = true;
         public string WindowBackdrop { get; set; } = "FakeMica";
+        /// <summary>"system", "en", "zh-CN" or any installed language tag.</summary>
+        public string Language { get; set; } = "system";
         public string AccentColorMode { get; set; } = "Custom";
         public string? CustomAccentColor { get; set; } = "#008B00";
         public bool HasMigratedToGreenWallpaperBlurTheme { get; set; }
