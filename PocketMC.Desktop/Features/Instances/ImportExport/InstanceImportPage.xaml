@@ -228,6 +228,12 @@
                                         <ComboBoxItem Tag="NeoForge" Content="{loc:Tr 'NeoForge'}"/>
                                         <ComboBoxItem Tag="Bedrock" Content="{loc:Tr 'Bedrock (BDS)'}"/>
                                         <ComboBoxItem Tag="Pocketmine" Content="{loc:Tr 'Pocketmine (PHP)'}"/>
+                                        <ComboBoxItem Tag="Purpur" Content="{loc:Tr 'Purpur'}"/>
+                                        <ComboBoxItem Tag="Spigot" Content="{loc:Tr 'Spigot'}"/>
+                                        <ComboBoxItem Tag="Mohist" Content="{loc:Tr 'Mohist'}"/>
+                                        <ComboBoxItem Tag="Arclight" Content="{loc:Tr 'Arclight'}"/>
+                                        <ComboBoxItem Tag="Magma" Content="{loc:Tr 'Magma'}"/>
+                                        <ComboBoxItem Tag="CatServer" Content="{loc:Tr 'CatServer'}"/>
                                     </ComboBox>
                                 </StackPanel>
 
