@@ -1,4 +1,5 @@
 using PocketMC.Infrastructure.Configuration;
+using PocketMC.Infrastructure.Storage;
 using PocketMC.Application.Services.Setup;
 using PocketMC.Desktop.Core.Interfaces;
 using System;
@@ -177,12 +178,12 @@ namespace PocketMC.Desktop.Features.Setup
             BackdropCombo.Items.Clear();
             if (Environment.OSVersion.Version.Build >= 22000)
             {
-                BackdropCombo.Items.Add(new ComboBoxItem { Content = "Mica (Windows 11)", Tag = "Mica" });
+                BackdropCombo.Items.Add(new ComboBoxItem { Content = L.T("Mica (Windows 11)"), Tag = "Mica" });
                 BackdropCombo.Items.Add(new ComboBoxItem { Content = "Acrylic", Tag = "Acrylic" });
             }
-            BackdropCombo.Items.Add(new ComboBoxItem { Content = "Wallpaper Blur", Tag = "FakeMica" });
-            BackdropCombo.Items.Add(new ComboBoxItem { Content = "Solid Dark", Tag = "Dark" });
-            BackdropCombo.Items.Add(new ComboBoxItem { Content = "Solid Light", Tag = "Light" });
+            BackdropCombo.Items.Add(new ComboBoxItem { Content = L.T("Wallpaper Blur"), Tag = "FakeMica" });
+            BackdropCombo.Items.Add(new ComboBoxItem { Content = L.T("Solid Dark"), Tag = "Dark" });
+            BackdropCombo.Items.Add(new ComboBoxItem { Content = L.T("Solid Light"), Tag = "Light" });
 
             string savedBackdrop = _applicationState.Settings.WindowBackdrop ?? "Acrylic";
             foreach (ComboBoxItem item in BackdropCombo.Items)
@@ -274,6 +275,11 @@ namespace PocketMC.Desktop.Features.Setup
             // Language & Region
             LoadLanguageOptions();
 
+            // Downloads & Mirrors
+            DownloadMirrorsToggle.IsChecked = _applicationState.Settings.UseDownloadMirrors;
+            CustomDownloadMirrorInput.IsEnabled = _applicationState.Settings.UseDownloadMirrors;
+            CustomDownloadMirrorInput.Text = _applicationState.Settings.CustomDownloadMirror ?? string.Empty;
+
             _isInitializing = false;
         }
 
@@ -285,6 +291,66 @@ namespace PocketMC.Desktop.Features.Setup
             var preference = _applicationState.Settings.Language ?? LocalizationService.SystemPreference;
             LanguageCombo.SelectedItem = options.FirstOrDefault(o => string.Equals(o.Tag, preference, StringComparison.OrdinalIgnoreCase))
                 ?? options.FirstOrDefault(o => string.Equals(o.Tag, LocalizationService.SystemPreference, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void ToggleUseDownloadMirrors_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+
+            var settings = _applicationState.Settings;
+            bool previous = settings.UseDownloadMirrors;
+            bool value = DownloadMirrorsToggle.IsChecked == true;
+            if (previous == value) return;
+
+            settings.UseDownloadMirrors = value;
+            try
+            {
+                _settingsManager.Save(settings);
+            }
+            catch (Exception ex)
+            {
+                settings.UseDownloadMirrors = previous;
+                DownloadMirrorsToggle.IsChecked = previous;
+                _dialogService.ShowMessage(L.T("Settings Error"), ex.Message, DialogType.Error);
+                return;
+            }
+
+            CustomDownloadMirrorInput.IsEnabled = value;
+        }
+
+        private void CustomDownloadMirrorInput_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+
+            var settings = _applicationState.Settings;
+            string? previous = settings.CustomDownloadMirror;
+            string? value = string.IsNullOrWhiteSpace(CustomDownloadMirrorInput.Text)
+                ? null
+                : CustomDownloadMirrorInput.Text.Trim();
+
+            if (value is not null && value != previous && !DownloadMirrorService.IsValidTemplate(value))
+            {
+                _dialogService.ShowMessage(
+                    L.T("Settings Error"),
+                    L.T("Use a full http(s) address that contains {url}, for example https://ghfast.top/{url}."),
+                    DialogType.Error);
+                CustomDownloadMirrorInput.Text = previous ?? string.Empty;
+                return;
+            }
+
+            if (string.Equals(previous, value, StringComparison.Ordinal)) return;
+
+            settings.CustomDownloadMirror = value;
+            try
+            {
+                _settingsManager.Save(settings);
+            }
+            catch (Exception ex)
+            {
+                settings.CustomDownloadMirror = previous;
+                CustomDownloadMirrorInput.Text = previous ?? string.Empty;
+                _dialogService.ShowMessage(L.T("Settings Error"), ex.Message, DialogType.Error);
+            }
         }
 
         private void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -354,7 +420,7 @@ namespace PocketMC.Desktop.Features.Setup
                     previousMinimizeToTrayOnClose);
                 _dialogService.ShowMessage(
                     "Settings Error",
-                    $"Could not update app behavior settings:\n{ex.Message}",
+                    L.F("Could not update app behavior settings:\n{0}", ex.Message),
                     DialogType.Error);
             }
         }
@@ -374,7 +440,7 @@ namespace PocketMC.Desktop.Features.Setup
             {
                 _dialogService.ShowMessage(
                     "Settings Error",
-                    $"Could not update telemetry settings:\n{ex.Message}",
+                    L.F("Could not update telemetry settings:\n{0}", ex.Message),
                     DialogType.Error);
             }
         }
@@ -399,7 +465,7 @@ namespace PocketMC.Desktop.Features.Setup
                 _sleepPreventionCoordinator.Refresh();
                 _dialogService.ShowMessage(
                     "Settings Error",
-                    $"Could not update power management settings:\n{ex.Message}",
+                    L.F("Could not update power management settings:\n{0}", ex.Message),
                     DialogType.Error);
             }
         }
@@ -451,7 +517,7 @@ namespace PocketMC.Desktop.Features.Setup
                     previousMinimizeToTrayOnClose);
                 _dialogService.ShowMessage(
                     "Windows Startup",
-                    $"Could not update Windows startup settings:\n{ex.Message}",
+                    L.F("Could not update Windows startup settings:\n{0}", ex.Message),
                     DialogType.Error);
             }
         }
@@ -611,7 +677,7 @@ namespace PocketMC.Desktop.Features.Setup
 
                 _dialogService.ShowMessage(
                     "Accent Color Applied",
-                    $"Successfully applied custom accent color {normalizedHex}.",
+                    L.F("Successfully applied custom accent color {0}.", normalizedHex),
                     DialogType.Information);
             }
             else
@@ -628,9 +694,7 @@ namespace PocketMC.Desktop.Features.Setup
                 UpdateAccentPreview(_accentColorService.GetCurrentAccentColor());
                 UpdateAccentSelection(null);
 
-                _dialogService.ShowMessage(
-                    "Accent Color Applied",
-                    "Successfully applied Windows system accent color.",
+                _dialogService.ShowMessage(L.T("Accent Color Applied"), L.T("Successfully applied Windows system accent color."),
                     DialogType.Information);
             }
 
@@ -668,9 +732,7 @@ namespace PocketMC.Desktop.Features.Setup
             string input = HexColorInput.Text.Trim();
             if (!AccentColorService.TryParseHexColor(input, out Color color, out string normalizedHex))
             {
-                _dialogService.ShowMessage(
-                    "Invalid Accent Color",
-                    "Enter a 6-digit hex color, for example #0078D4.",
+                _dialogService.ShowMessage(L.T("Invalid Accent Color"), L.T("Enter a 6-digit hex color, for example #0078D4."),
                     DialogType.Warning);
                 return;
             }
@@ -703,7 +765,7 @@ namespace PocketMC.Desktop.Features.Setup
 
             _dialogService.ShowMessage(
                 "Accent Color Applied",
-                $"Successfully applied custom accent color {normalizedHex}.",
+                L.F("Successfully applied custom accent color {0}.", normalizedHex),
                 DialogType.Information);
         }
 
@@ -766,7 +828,7 @@ namespace PocketMC.Desktop.Features.Setup
         {
             var openFileDialog = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "Select Custom Background Image",
+                Title = L.T("Select Custom Background Image"),
                 Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.webp;*.tif;*.tiff|All Files|*.*",
                 CheckFileExists = true
             };
@@ -880,7 +942,7 @@ namespace PocketMC.Desktop.Features.Setup
             }
             else if (isOfficial)
             {
-                CustomBgPathLabel.Text = "PocketMC Default Wallpaper";
+                CustomBgPathLabel.Text = L.T("PocketMC Default Wallpaper");
                 BtnUseDesktopBg.Visibility = Visibility.Visible;
                 CustomBgPlaceholderIcon.Visibility = Visibility.Collapsed;
 
@@ -906,7 +968,7 @@ namespace PocketMC.Desktop.Features.Setup
             }
             else
             {
-                CustomBgPathLabel.Text = "Windows Desktop Wallpaper";
+                CustomBgPathLabel.Text = L.T("Windows Desktop Wallpaper");
                 BtnClearCustomBg.Visibility = Visibility.Visible;
                 CustomBgPreviewImage.Source = null;
                 CustomBgPreviewImage.Visibility = Visibility.Collapsed;
@@ -1045,7 +1107,7 @@ namespace PocketMC.Desktop.Features.Setup
         {
             _applicationState.Settings.CurseForgeApiKey = CurseForgeKeyInput.Password.Trim();
             _settingsManager.Save(_applicationState.Settings);
-            _dialogService.ShowMessage("Saved", "API Configuration saved successfully.");
+            _dialogService.ShowMessage(L.T("Saved"), L.T("API Configuration saved successfully."));
         }
 
         // ── AI Summarization Handlers ──────────────────────────────────
@@ -1113,29 +1175,29 @@ namespace PocketMC.Desktop.Features.Setup
 
                 if (isCloud)
                 {
-                    AiApiKeyTitle.Text = "Ollama Cloud API Key";
-                    AiApiKeySubtitle.Text = "Required for Ollama Cloud. Get your key at ollama.com/settings/keys.";
-                    AiApiKeyInput.PlaceholderText = "Paste your Ollama Cloud API key...";
-                    BtnValidateAiKey.Content = "Validate Key";
+                    AiApiKeyTitle.Text = L.T("Ollama Cloud API Key");
+                    AiApiKeySubtitle.Text = L.T("Required for Ollama Cloud. Get your key at ollama.com/settings/keys.");
+                    AiApiKeyInput.PlaceholderText = L.T("Paste your Ollama Cloud API key...");
+                    BtnValidateAiKey.Content = L.T("Validate Key");
                 }
                 else
                 {
-                    AiApiKeyTitle.Text = "API Key (Optional)";
-                    AiApiKeySubtitle.Text = "Local Ollama models do not require an API key unless using an authenticated reverse proxy.";
-                    AiApiKeyInput.PlaceholderText = "Optional for local Ollama...";
-                    BtnValidateAiKey.Content = "Test Connection";
+                    AiApiKeyTitle.Text = L.T("API Key (Optional)");
+                    AiApiKeySubtitle.Text = L.T("Local Ollama models do not require an API key unless using an authenticated reverse proxy.");
+                    AiApiKeyInput.PlaceholderText = L.T("Optional for local Ollama...");
+                    BtnValidateAiKey.Content = L.T("Test Connection");
                     if (OllamaStatusTitle != null)
-                        OllamaStatusTitle.Text = "Daemon Status";
+                        OllamaStatusTitle.Text = L.T("Daemon Status");
                 }
 
                 _ = RefreshOllamaDaemonStatusAsync();
             }
             else
             {
-                AiApiKeyTitle.Text = "API Key";
-                AiApiKeySubtitle.Text = "Enter your API key for the selected provider. Keys are stored locally.";
-                AiApiKeyInput.PlaceholderText = "Paste your API key here...";
-                BtnValidateAiKey.Content = "Validate";
+                AiApiKeyTitle.Text = L.T("API Key");
+                AiApiKeySubtitle.Text = L.T("Enter your API key for the selected provider. Keys are stored locally.");
+                AiApiKeyInput.PlaceholderText = L.T("Paste your API key here...");
+                BtnValidateAiKey.Content = L.T("Validate");
             }
         }
 
@@ -1174,11 +1236,11 @@ namespace PocketMC.Desktop.Features.Setup
 
             if (isCloud)
             {
-                AiEndpointUrlInput.Text = "https://ollama.com/api/chat";
+                AiEndpointUrlInput.Text = L.T("https://ollama.com/api/chat");
             }
             else
             {
-                AiEndpointUrlInput.Text = "http://localhost:11434/api/chat";
+                AiEndpointUrlInput.Text = L.T("http://localhost:11434/api/chat");
             }
 
             PopulateModelsForProvider(AiProviderType.Ollama);
@@ -1233,11 +1295,11 @@ namespace PocketMC.Desktop.Features.Setup
 
                     if (isCloud)
                     {
-                        OllamaStatusText.Text = "Connected - Ollama Cloud API";
+                        OllamaStatusText.Text = L.T("Connected - Ollama Cloud API");
                     }
                     else
                     {
-                        OllamaStatusText.Text = $"Online - Ollama v{status.Version}";
+                        OllamaStatusText.Text = L.F("Online - Ollama v{0}", status.Version);
                     }
                     OllamaStatusText.Foreground = new SolidColorBrush(Color.FromRgb(0xA6, 0xE3, 0xA1));
                     await LoadOllamaModelsAsync(endpoint);
@@ -1252,7 +1314,7 @@ namespace PocketMC.Desktop.Features.Setup
 
                     if (isCloud)
                     {
-                        OllamaStatusText.Text = "Ollama Cloud API unreachable.";
+                        OllamaStatusText.Text = L.T("Ollama Cloud API unreachable.");
                     }
                     else
                     {
@@ -1548,7 +1610,7 @@ namespace PocketMC.Desktop.Features.Setup
 
             var originalContent = BtnValidateAiKey.Content;
             BtnValidateAiKey.IsEnabled = false;
-            BtnValidateAiKey.Content = "Validating...";
+            BtnValidateAiKey.Content = L.T("Validating...");
 
             try
             {
@@ -1565,7 +1627,7 @@ namespace PocketMC.Desktop.Features.Setup
                         ? "Ollama Cloud API key is valid. Connection successful."
                         : provider == AiProviderType.Ollama
                             ? "Connection to Ollama successful."
-                            : $"{_aiProviderFactory.GetDisplayName(provider)} API key is valid. Connection successful.";
+                            : L.F("{0} API key is valid. Connection successful.", _aiProviderFactory.GetDisplayName(provider));
 
                     if (provider == AiProviderType.Ollama)
                     {
@@ -1580,7 +1642,7 @@ namespace PocketMC.Desktop.Features.Setup
                         ? "Ollama Cloud Validation Failed"
                         : provider == AiProviderType.Ollama
                             ? "Connection Failed"
-                            : $"{_aiProviderFactory.GetDisplayName(provider)} Validation Failed";
+                            : L.F("{0} Validation Failed", _aiProviderFactory.GetDisplayName(provider));
 
                     var errorMessage = string.IsNullOrWhiteSpace(result.Error)
                         ? "Validation failed. Please verify your API key and connection settings."
@@ -1593,7 +1655,7 @@ namespace PocketMC.Desktop.Features.Setup
             {
                 AppDialog.ShowError(
                     "Connection Error",
-                    $"An error occurred while validating:\n\n{ex.Message}");
+                    L.F("An error occurred while validating:\n\n{0}", ex.Message));
             }
             finally
             {
@@ -1608,7 +1670,7 @@ namespace PocketMC.Desktop.Features.Setup
             var provider = GetSelectedProvider().ToString();
             settings.AiApiKeys[provider] = AiApiKeyInput.Password.Trim();
             _settingsManager.Save(settings);
-            _dialogService.ShowMessage("Saved", "AI API key saved successfully.");
+            _dialogService.ShowMessage(L.T("Saved"), L.T("AI API key saved successfully."));
         }
 
         private void ToggleAiSummarization_Changed(object sender, RoutedEventArgs e)
@@ -1852,7 +1914,7 @@ namespace PocketMC.Desktop.Features.Setup
         {
             BtnCheckUpdates.IsEnabled = false;
             UpdateStatusText.Visibility = Visibility.Visible;
-            UpdateStatusText.Text = "⏳ Checking for updates...";
+            UpdateStatusText.Text = L.T("⏳ Checking for updates...");
             UpdateStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x89, 0xB4, 0xFA));
 
             try
@@ -1861,12 +1923,12 @@ namespace PocketMC.Desktop.Features.Setup
 
                 if (_updateService.HasPendingUpdate)
                 {
-                    UpdateStatusText.Text = $"✅ Update ready: {_updateService.PendingVersion}. See the top banner to restart.";
+                    UpdateStatusText.Text = L.F("✅ Update ready: {0}. See the top banner to restart.", _updateService.PendingVersion);
                     UpdateStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xA6, 0xE3, 0xA1));
                 }
                 else
                 {
-                    UpdateStatusText.Text = "✅ PocketMC is up to date!";
+                    UpdateStatusText.Text = L.T("✅ PocketMC is up to date!");
                     UpdateStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xA6, 0xE3, 0xA1));
                 }
             }
@@ -1885,7 +1947,7 @@ namespace PocketMC.Desktop.Features.Setup
         {
             var folderDialog = new System.Windows.Forms.FolderBrowserDialog
             {
-                Description = "Select External Backup Folder (e.g. Google Drive/Dropbox sync folder)"
+                Description = L.T("Select External Backup Folder (e.g. Google Drive/Dropbox sync folder)")
             };
 
             if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -1900,7 +1962,7 @@ namespace PocketMC.Desktop.Features.Setup
 
             if (!string.IsNullOrWhiteSpace(path) && !System.IO.Directory.Exists(path))
             {
-                _dialogService.ShowMessage("Invalid Path", "The selected directory does not exist or is inaccessible.");
+                _dialogService.ShowMessage(L.T("Invalid Path"), L.T("The selected directory does not exist or is inaccessible."));
                 return;
             }
 
@@ -1908,14 +1970,14 @@ namespace PocketMC.Desktop.Features.Setup
             settings.ExternalBackupDirectory = string.IsNullOrWhiteSpace(path) ? null : path;
             _settingsManager.Save(settings);
 
-            _dialogService.ShowMessage("Saved", "External backup location saved. Next time a server backup runs, it will be automatically replicated here.");
+            _dialogService.ShowMessage(L.T("Saved"), L.T("External backup location saved. Next time a server backup runs, it will be automatically replicated here."));
         }
 
         private async void ExportBundle_Click(object sender, RoutedEventArgs e)
         {
             BtnExportBundle.IsEnabled = false;
             ExportBundleStatusText.Visibility = Visibility.Visible;
-            ExportBundleStatusText.Text = "⏳ Generating support bundle (This may take a moment)...";
+            ExportBundleStatusText.Text = L.T("⏳ Generating support bundle (This may take a moment)...");
             ExportBundleStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x89, 0xB4, 0xFA));
 
             try
@@ -1924,7 +1986,7 @@ namespace PocketMC.Desktop.Features.Setup
                 string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
                 string bundlePath = await _diagnosticService.GenerateSupportBundleAsync(desktopPath);
 
-                ExportBundleStatusText.Text = $"✅ Bundle saved to Desktop: {System.IO.Path.GetFileName(bundlePath)}";
+                ExportBundleStatusText.Text = L.F("✅ Bundle saved to Desktop: {0}", System.IO.Path.GetFileName(bundlePath));
                 ExportBundleStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xA6, 0xE3, 0xA1));
 
                 // Select file in explorer
@@ -1932,7 +1994,7 @@ namespace PocketMC.Desktop.Features.Setup
             }
             catch (Exception ex)
             {
-                ExportBundleStatusText.Text = $"❌ Failed to generate bundle: {ex.Message}";
+                ExportBundleStatusText.Text = L.F("❌ Failed to generate bundle: {0}", ex.Message);
                 ExportBundleStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xF3, 0x38, 0xA8));
             }
             finally
@@ -1961,7 +2023,7 @@ namespace PocketMC.Desktop.Features.Setup
                 {
                     if (statusText != null)
                     {
-                        statusText.Text = "✅ Loopback exemption is already active. Bedrock can connect to localhost.";
+                        statusText.Text = L.T("✅ Loopback exemption is already active. Bedrock can connect to localhost.");
                         statusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xA6, 0xE3, 0xA1));
                         statusText.Visibility = Visibility.Visible;
                     }
@@ -1970,7 +2032,7 @@ namespace PocketMC.Desktop.Features.Setup
 
                 if (statusText != null)
                 {
-                    statusText.Text = "⏳ Requesting elevation — please approve the UAC prompt...";
+                    statusText.Text = L.T("⏳ Requesting elevation — please approve the UAC prompt...");
                     statusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x89, 0xB4, 0xFA));
                     statusText.Visibility = Visibility.Visible;
                 }
@@ -1981,12 +2043,12 @@ namespace PocketMC.Desktop.Features.Setup
                 {
                     if (success)
                     {
-                        statusText.Text = "✅ Loopback exemption applied! Restart Minecraft Bedrock and try connecting to localhost.";
+                        statusText.Text = L.T("✅ Loopback exemption applied! Restart Minecraft Bedrock and try connecting to localhost.");
                         statusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xA6, 0xE3, 0xA1));
                     }
                     else
                     {
-                        statusText.Text = "⚠ Could not apply the exemption. You may have cancelled the UAC prompt, or CheckNetIsolation.exe is unavailable.";
+                        statusText.Text = L.T("⚠ Could not apply the exemption. You may have cancelled the UAC prompt, or CheckNetIsolation.exe is unavailable.");
                         statusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xF9, 0xE2, 0xAF));
                     }
                     statusText.Visibility = Visibility.Visible;
@@ -2040,7 +2102,7 @@ namespace PocketMC.Desktop.Features.Setup
 
                 if (string.Equals(currentRoot, targetPath, StringComparison.OrdinalIgnoreCase))
                 {
-                    _dialogService.ShowMessage("Invalid Directory", "The selected directory is the same as the current root folder.", DialogType.Warning);
+                    _dialogService.ShowMessage(L.T("Invalid Directory"), L.T("The selected directory is the same as the current root folder."), DialogType.Warning);
                     return;
                 }
 
@@ -2053,7 +2115,7 @@ namespace PocketMC.Desktop.Features.Setup
                     if (normTarget.StartsWith(normCurrent, StringComparison.OrdinalIgnoreCase) ||
                         normCurrent.StartsWith(normTarget, StringComparison.OrdinalIgnoreCase))
                     {
-                        _dialogService.ShowMessage("Invalid Directory", "The selected directory cannot be nested within or overlap with the current root directory.", DialogType.Error);
+                        _dialogService.ShowMessage(L.T("Invalid Directory"), L.T("The selected directory cannot be nested within or overlap with the current root directory."), DialogType.Error);
                         return;
                     }
                 }
@@ -2063,7 +2125,7 @@ namespace PocketMC.Desktop.Features.Setup
                 bool anyRunning = instances.Any(i => _serverLifecycleService.IsRunning(i.Id));
                 if (anyRunning)
                 {
-                    _dialogService.ShowMessage("Active Servers Running", "All running servers must be stopped before changing the root directory.", DialogType.Error);
+                    _dialogService.ShowMessage(L.T("Active Servers Running"), L.T("All running servers must be stopped before changing the root directory."), DialogType.Error);
                     return;
                 }
 
@@ -2111,7 +2173,7 @@ namespace PocketMC.Desktop.Features.Setup
                         }
                         catch (Exception ex)
                         {
-                            _dialogService.ShowMessage("Transfer Failed", $"Failed to copy data to the new folder:\n\n{ex.Message}", DialogType.Error);
+                            _dialogService.ShowMessage("Transfer Failed", L.F("Failed to copy data to the new folder:\n\n{0}", ex.Message), DialogType.Error);
                             return;
                         }
 
@@ -2151,12 +2213,12 @@ namespace PocketMC.Desktop.Features.Setup
                         }
                         catch (Exception ex)
                         {
-                            _dialogService.ShowMessage("Cleanup Warning", $"The data was transferred successfully and settings updated, but some files in the old folder could not be deleted:\n\n{ex.Message}\n\nYou can safely delete the old folder manually.", DialogType.Warning);
+                            _dialogService.ShowMessage("Cleanup Warning", L.F("The data was transferred successfully and settings updated, but some files in the old folder could not be deleted:\n\n{0}\n\nYou can safely delete the old folder manually.", ex.Message), DialogType.Warning);
                             RootDirectoryPathInput.Text = targetPath;
                             return;
                         }
 
-                        _dialogService.ShowMessage("Success", "The data has been successfully transferred and the root directory updated.", DialogType.Information);
+                        _dialogService.ShowMessage(L.T("Success"), L.T("The data has been successfully transferred and the root directory updated."), DialogType.Information);
                     }
                     else if (confirmResult == DialogResult.No) // Update Reference Only
                     {
@@ -2166,7 +2228,7 @@ namespace PocketMC.Desktop.Features.Setup
                         _applicationState.ApplySettings(settings);
                         _registry.Refresh();
 
-                        _dialogService.ShowMessage("Success", "Root directory reference updated. No files were moved.", DialogType.Information);
+                        _dialogService.ShowMessage(L.T("Success"), L.T("Root directory reference updated. No files were moved."), DialogType.Information);
                     }
 
                     RootDirectoryPathInput.Text = targetPath;
@@ -2184,7 +2246,7 @@ namespace PocketMC.Desktop.Features.Setup
             }
             catch (Exception ex)
             {
-                _dialogService.ShowMessage("Error", $"An unexpected error occurred: {ex.Message}", DialogType.Error);
+                _dialogService.ShowMessage("Error", L.F("An unexpected error occurred: {0}", ex.Message), DialogType.Error);
             }
             finally
             {
@@ -2212,7 +2274,7 @@ namespace PocketMC.Desktop.Features.Setup
                 var categories = dialog.GetSelectedCategories();
                 var saveFileDialog = new Microsoft.Win32.SaveFileDialog
                 {
-                    Title = "Save Settings Backup",
+                    Title = L.T("Save Settings Backup"),
                     Filter = "PocketMC Settings Backup (*.json)|*.json|All Files (*.*)|*.*",
                     FileName = $"PocketMC-Settings-Backup-{DateTime.Now:yyyy-MM-dd}.json",
                     DefaultExt = ".json"
@@ -2226,13 +2288,13 @@ namespace PocketMC.Desktop.Features.Setup
 
                     _dialogService.ShowMessage(
                         "Backup Saved",
-                        $"Your settings backup has been saved successfully to:\n{saveFileDialog.FileName}",
+                        L.F("Your settings backup has been saved successfully to:\n{0}", saveFileDialog.FileName),
                         DialogType.Information);
                 }
             }
             catch (Exception ex)
             {
-                _dialogService.ShowMessage("Backup Failed", $"Could not save settings backup:\n{ex.Message}", DialogType.Error);
+                _dialogService.ShowMessage("Backup Failed", L.F("Could not save settings backup:\n{0}", ex.Message), DialogType.Error);
             }
         }
 
@@ -2242,7 +2304,7 @@ namespace PocketMC.Desktop.Features.Setup
             {
                 var openFileDialog = new Microsoft.Win32.OpenFileDialog
                 {
-                    Title = "Select PocketMC Settings Backup File",
+                    Title = L.T("Select PocketMC Settings Backup File"),
                     Filter = "PocketMC Settings Backup (*.json)|*.json|All Files (*.*)|*.*",
                     CheckFileExists = true
                 };
@@ -2262,7 +2324,7 @@ namespace PocketMC.Desktop.Features.Setup
                 {
                     _dialogService.ShowMessage(
                         "Invalid Backup File",
-                        $"The selected file is not a valid PocketMC settings backup package.\n\nDetails: {ex.Message}",
+                        L.F("The selected file is not a valid PocketMC settings backup package.\n\nDetails: {0}", ex.Message),
                         DialogType.Error);
                     return;
                 }
@@ -2321,7 +2383,7 @@ namespace PocketMC.Desktop.Features.Setup
             }
             catch (Exception ex)
             {
-                _dialogService.ShowMessage("Restore Failed", $"Could not restore settings:\n{ex.Message}", DialogType.Error);
+                _dialogService.ShowMessage("Restore Failed", L.F("Could not restore settings:\n{0}", ex.Message), DialogType.Error);
             }
         }
 
@@ -2397,7 +2459,7 @@ namespace PocketMC.Desktop.Features.Setup
             }
             catch (Exception ex)
             {
-                _dialogService.ShowMessage("Reset Failed", $"Could not reset settings:\n{ex.Message}", DialogType.Error);
+                _dialogService.ShowMessage("Reset Failed", L.F("Could not reset settings:\n{0}", ex.Message), DialogType.Error);
             }
         }
     }

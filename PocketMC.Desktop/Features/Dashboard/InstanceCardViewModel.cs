@@ -26,9 +26,9 @@ public class InstanceCardViewModel : INotifyPropertyChanged
     private readonly PocketMC.Application.Services.Shell.ApplicationState _appState;
     private ServerState _state = ServerState.Stopped;
     private string? _countdownText;
-    private string _cpuText = "· · ·";
-    private string _ramText = "· · ·";
-    private string _playerStatus = "· · ·";
+    private string _cpuText = L.T("· · ·");
+    private string _ramText = L.T("· · ·");
+    private string _playerStatus = L.T("· · ·");
     private string? _tunnelAddress;
     private string? _numericTunnelAddress;
     private string? _bedrockTunnelAddress;

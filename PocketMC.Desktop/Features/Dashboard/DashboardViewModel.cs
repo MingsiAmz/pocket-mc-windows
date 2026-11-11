@@ -283,7 +283,7 @@ namespace PocketMC.Desktop.Features.Dashboard
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to pre-resolve offline tunnels on dashboard load: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine(L.F("Failed to pre-resolve offline tunnels on dashboard load: {0}", ex.Message));
             }
         }
     }

@@ -45,6 +45,15 @@ auth_proxies:                                                         # [Dynamic
 telemetry_proxies:                                                    # [Dynamic Cloud] Live-updates telemetry proxies
   - "https://pocket-mc-proxy-3fqm.onrender.com/"
   - "https://pocket-mc-proxy.onrender.com/"
+download_mirror_tunnels:                                              # [Dynamic Cloud] Live-updates download mirror tunnels ({url} = original link)
+  - "https://ghfast.top/{url}"
+  - "https://gh-proxy.com/{url}"
+  - "https://ghproxy.net/{url}"
+  - "https://hub.gitmirror.com/{url}"
+  - "https://gh.llkk.cc/{url}"
+  - "https://mirror.ghproxy.com/{url}"
+  - "https://github.moeyy.xyz/{url}"
+  - "https://cf.ghproxy.cc/{url}"
 discord_api_urls:                                                     # [Dynamic Cloud] Live-updates Discord bot notification webhooks
   - "https://pocketmc-welcome-bot-k1gq.onrender.com"
   - "https://pocketmc-welcome-bot-1e5d.onrender.com"

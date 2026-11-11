@@ -29,6 +29,9 @@ namespace PocketMC.Domain.Models
         public string WindowBackdrop { get; set; } = "FakeMica";
         /// <summary>"system", "en", "zh-CN" or any installed language tag.</summary>
         public string Language { get; set; } = "system";
+        // Download acceleration through mirror tunnels
+        public bool UseDownloadMirrors { get; set; } = true;
+        public string? CustomDownloadMirror { get; set; }
         public string AccentColorMode { get; set; } = "Custom";
         public string? CustomAccentColor { get; set; } = "#008B00";
         public bool HasMigratedToGreenWallpaperBlurTheme { get; set; }

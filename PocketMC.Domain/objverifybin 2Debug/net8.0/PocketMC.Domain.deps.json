@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "PocketMC.Domain/1.9.10": {
+        "runtime": {
+          "PocketMC.Domain.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "PocketMC.Domain/1.9.10": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

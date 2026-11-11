@@ -4,7 +4,7 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:presentation="clr-namespace:PocketMC.Desktop.Core.Presentation"
       xmlns:loc="clr-namespace:PocketMC.Desktop.Localization"
-      Title="Dashboard">
+      Title="{loc:Tr 'Dashboard'}">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -338,7 +338,7 @@
                                     <Border Grid.Row="2" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,12">
                                         <UniformGrid Columns="3">
                                             <StackPanel HorizontalAlignment="Center">
-                                                <TextBlock Text="CPU" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                <TextBlock Text="{loc:Tr 'CPU'}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                                 <TextBlock Text="{Binding CpuText}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" HorizontalAlignment="Center"/>
                                             </StackPanel>
                                             <StackPanel HorizontalAlignment="Center">
