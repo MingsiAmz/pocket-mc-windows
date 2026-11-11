@@ -171,6 +171,8 @@ namespace PocketMC.Desktop.Features.Settings
                 dialogService,
                 () => IsRunning,
                 serviceProvider.GetRequiredService<PocketMC.Infrastructure.Java.JavaProvisioningService>(),
+                _applicationState,
+                (SettingsManager)serviceProvider.GetService(typeof(SettingsManager))!,
                 async (bool isMinecraftUpdate) => 
                 {
                     if (isMinecraftUpdate)

@@ -502,22 +502,27 @@
                                                 <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,24,0">
                                                     <TextBlock Text="{loc:Tr 'Update to'}" FontSize="12" 
                                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4"/>
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" MaxWidth="240"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <ComboBox ItemsSource="{Binding VersionUpdates.TargetVersions}"
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <ComboBox Width="110"
+                                                                  ItemsSource="{Binding VersionUpdates.TargetVersions}"
                                                                   SelectedItem="{Binding VersionUpdates.SelectedTargetVersion, Mode=TwoWay}"
                                                                   DisplayMemberPath="Id"
+                                                                  ToolTip="{loc:Tr 'Minecraft version'}"
                                                                   IsEnabled="{Binding VersionUpdates.HasTargetVersions}"/>
-                                                        <ui:Button Grid.Column="1"
-                                                                   Icon="{ui:SymbolIcon ArrowClockwise20}"
+                                                        <ComboBox Width="140"
+                                                                  ItemsSource="{Binding VersionUpdates.TargetLoaderVersions}"
+                                                                  SelectedItem="{Binding VersionUpdates.SelectedTargetLoaderVersion, Mode=TwoWay}"
+                                                                  DisplayMemberPath="Version"
+                                                                  ToolTip="{loc:Tr 'Loader build'}"
+                                                                  Margin="8,0,0,0"
+                                                                  Visibility="{Binding VersionUpdates.HasTargetLoaderVersions, Converter={StaticResource VisibleIfTrue}}"
+                                                                  IsEnabled="{Binding VersionUpdates.HasTargetLoaderVersions}"/>
+                                                        <ui:Button Icon="{ui:SymbolIcon ArrowClockwise20}"
                                                                    Appearance="Secondary"
                                                                    Command="{Binding VersionUpdates.LoadTargetVersionsCommand}"
                                                                    Margin="6,0,0,0"
                                                                    ToolTip="{loc:Tr 'Refresh available versions'}"/>
-                                                    </Grid>
+                                                    </StackPanel>
                                                 </StackPanel>
 
                                                 <!-- Update Button -->
@@ -581,23 +586,15 @@
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="Auto" MaxWidth="240"/>
-                                                            <ColumnDefinition Width="Auto" MaxWidth="240"/>
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <ComboBox Width="130"
-                                                                  ItemsSource="{Binding VersionUpdates.LoaderGameVersions}"
-                                                                  SelectedItem="{Binding VersionUpdates.SelectedLoaderGameVersion, Mode=TwoWay}"
-                                                                  DisplayMemberPath="Id"
-                                                                  ToolTip="{loc:Tr 'Minecraft version'}"
-                                                                  Margin="0,0,8,0"/>
-                                                        <ComboBox Grid.Column="1"
-                                                                  Width="150"
+                                                        <ComboBox Width="150"
                                                                   ItemsSource="{Binding VersionUpdates.TargetLoaderVersions}"
                                                                   SelectedItem="{Binding VersionUpdates.SelectedTargetLoaderVersion, Mode=TwoWay}"
                                                                   DisplayMemberPath="Version"
                                                                   ToolTip="{loc:Tr 'Loader build'}"
                                                                   IsEnabled="{Binding VersionUpdates.HasTargetLoaderVersions}"/>
-                                                        <ui:Button Grid.Column="2"
+                                                        <ui:Button Grid.Column="1"
                                                                    Icon="{ui:SymbolIcon ArrowClockwise20}"
                                                                    Appearance="Secondary"
                                                                    Command="{Binding VersionUpdates.LoadTargetVersionsCommand}"
@@ -612,6 +609,36 @@
                                                                Appearance="Primary" 
                                                                Command="{Binding VersionUpdates.ApplyLoaderUpdateCommand}" 
                                                                Icon="{ui:SymbolIcon ArrowSync20}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </ui:Card>
+
+                                        <!-- Download Mirrors Card -->
+                                        <ui:Card Padding="24" Margin="0,0,0,16">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,24,0">
+                                                    <TextBlock Text="{loc:Tr 'Download Mirrors'}" FontSize="16" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                                    <TextBlock Text="{loc:Tr 'Server files are downloaded from Mojang first. Enable mirrors when the official links are unreachable.'}"
+                                                               FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                    <TextBlock Text="{loc:Tr 'Custom mirror supports the {url} placeholder or a trailing slash, e.g. https://ghfast.top/{url}'}"
+                                                               FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="260">
+                                                    <ui:ToggleSwitch Content="{loc:Tr 'Use download mirrors'}"
+                                                                     IsChecked="{Binding VersionUpdates.UseDownloadMirrors, Mode=TwoWay}"
+                                                                     HorizontalAlignment="Right"/>
+                                                    <ui:TextBox Text="{Binding VersionUpdates.CustomDownloadMirror, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                             PlaceholderText="{loc:Tr 'Custom mirror (optional)'}"
+                                                             Margin="0,8,0,0"/>
                                                 </StackPanel>
                                             </Grid>
                                         </ui:Card>
