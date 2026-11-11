@@ -54,9 +54,18 @@ public sealed class DownloadMirrorService
     {
         ["launchermeta.mojang.com"] = BmclApiBase,
         ["piston-meta.mojang.com"] = BmclApiBase,
-        ["piston-data.mojang.com"] = BmclApiBase,
-        ["libraries.minecraft.net"] = BmclApiBase,
-        ["resources.download.minecraft.net"] = BmclApiBase
+        ["piston-data.mojang.com"] = BmclApiBase
+    };
+
+    // Maven hosts mapped onto "{mavenMirror}/<path>"; the prefix is stripped from the request path.
+    private static readonly Dictionary<string, string> MavenHosts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["libraries.minecraft.net"] = "",
+        ["maven.neoforged.net"] = "releases",
+        ["maven.minecraftforge.net"] = "",
+        ["files.minecraftforge.net"] = "maven",
+        ["repo1.maven.org"] = "maven2",
+        ["repo.maven.apache.org"] = "maven2"
     };
 
     private readonly Func<DownloadMirrorOptions> _optionsAccessor;
@@ -68,6 +77,20 @@ public sealed class DownloadMirrorService
     }
 
     public DownloadMirrorOptions Current => _optionsAccessor() ?? DownloadMirrorOptions.Disabled;
+
+    /// <summary>True when the user has not disabled accelerated downloads.</summary>
+    public bool MirrorsEnabled => Current.Enabled;
+
+    /// <summary>Base URL of the maven mirror, without a trailing slash; null when unavailable.</summary>
+    public string? MavenMirrorBase
+    {
+        get
+        {
+            if (!Current.Enabled) return null;
+            string? baseUrl = AppConfig.DownloadMavenMirrors.FirstOrDefault();
+            return string.IsNullOrWhiteSpace(baseUrl) ? null : baseUrl.TrimEnd('/');
+        }
+    }
 
     /// <summary>Returns the direct URL only when mirrors are disabled or no mirror applies.</summary>
     public IReadOnlyList<DownloadMirrorCandidate> GetCandidates(Uri original)
@@ -107,6 +130,11 @@ public sealed class DownloadMirrorService
         if (TryMapMojang(original, out Uri? mojangUri))
         {
             mirrors.Add(new DownloadMirrorCandidate(mojangUri, "bmclapi"));
+        }
+
+        if (TryMapMaven(original, out Uri? mavenUri))
+        {
+            mirrors.Add(new DownloadMirrorCandidate(mavenUri, "bmclapi-maven"));
         }
 
         if (mirrors.Count == 0)
@@ -218,6 +246,12 @@ public sealed class DownloadMirrorService
     private static bool TryMapMojang(Uri original, out Uri result)
     {
         result = null!;
+        if (string.Equals(original.Host, "resources.download.minecraft.net", StringComparison.OrdinalIgnoreCase))
+        {
+            result = new Uri(BmclApiBase + "/assets" + original.AbsolutePath);
+            return true;
+        }
+
         if (!MojangMirrorHosts.TryGetValue(original.Host, out string? mirrorBase))
         {
             return false;
@@ -238,6 +272,29 @@ public sealed class DownloadMirrorService
             }
         }
 
+        return true;
+    }
+
+    /// <summary>Maps maven repository downloads onto the configured maven mirror.</summary>
+    private static bool TryMapMaven(Uri original, out Uri result)
+    {
+        result = null!;
+        if (!MavenHosts.TryGetValue(original.Host, out string? prefix)) return false;
+
+        string? mirrorBase = AppConfig.DownloadMavenMirrors.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(mirrorBase)) return false;
+
+        string path = original.AbsolutePath;
+        if (prefix.Length > 0)
+        {
+            string required = "/" + prefix;
+            if (!path.StartsWith(required + "/", StringComparison.OrdinalIgnoreCase)) return false;
+            path = path[required.Length..];
+        }
+
+        if (!Uri.TryCreate(mirrorBase.TrimEnd('/') + path, UriKind.Absolute, out Uri? mapped)) return false;
+
+        result = mapped;
         return true;
     }
 

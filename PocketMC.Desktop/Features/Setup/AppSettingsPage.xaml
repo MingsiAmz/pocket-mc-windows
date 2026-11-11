@@ -303,6 +303,26 @@
                         <ui:TextBox x:Name="CustomDownloadMirrorInput" MinWidth="320" HorizontalAlignment="Left"
                                     PlaceholderText="https://ghfast.top/{url}"
                                     LostFocus="CustomDownloadMirrorInput_LostFocus"/>
+
+                        <Grid Margin="0,20,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Tr 'Threads:'}" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
+                            <ComboBox Grid.Column="1" x:Name="DownloadThreadsCombo" MinWidth="90" Margin="8,0,32,0"
+                                      SelectionChanged="DownloadThreadsCombo_SelectionChanged"/>
+                            <TextBlock Grid.Column="2" Text="{loc:Tr 'Simultaneous downloads:'}" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
+                            <ComboBox Grid.Column="3" x:Name="DownloadConcurrencyCombo" MinWidth="90" Margin="8,0,0,0"
+                                      SelectionChanged="DownloadConcurrencyCombo_SelectionChanged"/>
+                        </Grid>
+                        <TextBlock Text="{loc:Tr 'Each file is split into range segments; simultaneous downloads run several files at once. Higher values use more bandwidth.'}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   FontSize="12"
+                                   Margin="0,6,0,0"
+                                   TextWrapping="Wrap"/>
                     </StackPanel>
                 </ui:CardExpander>
 

@@ -84,7 +84,7 @@ public sealed class DownloadMirrorServiceTests
 
         Assert.Equal("https://bmclapi2.bangbang93.com/mc/game/version_manifest.json", manifest[0].Uri.AbsoluteUri);
         Assert.Equal("https://bmclapi2.bangbang93.com/version/1.20.1/json", meta[0].Uri.AbsoluteUri);
-        Assert.Equal("https://bmclapi2.bangbang93.com/com/example/lib.jar", library[0].Uri.AbsoluteUri);
+        Assert.Equal("https://bmclapi2.bangbang93.com/maven/com/example/lib.jar", library[0].Uri.AbsoluteUri);
         Assert.Null(manifest[^1].Tunnel);
     }
 
@@ -135,5 +135,33 @@ public sealed class DownloadMirrorServiceTests
     public void IsValidTemplate_ValidatesPlaceholderOrPrefix(string template, bool expected)
     {
         Assert.Equal(expected, DownloadMirrorService.IsValidTemplate(template));
+    }
+
+    [Fact]
+    public void GetCandidates_MapsNeoForgeMavenOntoMavenMirror()
+    {
+        string mirror = PocketMC.Infrastructure.Configuration.AppConfig.DownloadMavenMirrors[0].TrimEnd('/');
+        DownloadMirrorService service = Create(true);
+
+        var candidates = service.GetCandidates(new Uri(
+            "https://maven.neoforged.net/releases/net/neoforged/neoforge/21.1.172/neoforge-21.1.172-installer.jar"));
+
+        var mapped = candidates.Single(c => c.Tunnel == "bmclapi-maven");
+        Assert.Equal($"{mirror}/net/neoforged/neoforge/21.1.172/neoforge-21.1.172-installer.jar", mapped.Uri.AbsoluteUri);
+    }
+
+    [Fact]
+    public void GetCandidates_MapsMojangLibrariesAndAssets()
+    {
+        string mirror = PocketMC.Infrastructure.Configuration.AppConfig.DownloadMavenMirrors[0].TrimEnd('/');
+        DownloadMirrorService service = Create(true);
+
+        var library = service.GetCandidates(new Uri("https://libraries.minecraft.net/com/google/guava/guava/32.1.2-jre/guava-32.1.2-jre.jar"))
+            .Single(c => c.Tunnel == "bmclapi-maven");
+        Assert.Equal($"{mirror}/com/google/guava/guava/32.1.2-jre/guava-32.1.2-jre.jar", library.Uri.AbsoluteUri);
+
+        var asset = service.GetCandidates(new Uri("https://resources.download.minecraft.net/2e/2ea8f1b7f6b0f0e2b6a5f0e0f0a0b0c0d0e0f0a0"))
+            .Single(c => c.Tunnel == "bmclapi");
+        Assert.Equal("https://bmclapi2.bangbang93.com/assets/2e/2ea8f1b7f6b0f0e2b6a5f0e0f0a0b0c0d0e0f0a0", asset.Uri.AbsoluteUri);
     }
 }

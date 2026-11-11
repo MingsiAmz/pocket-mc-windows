@@ -118,6 +118,8 @@ namespace PocketMC.Desktop.Features.Shell
 
         private void OnSettingsSaved(object? sender, AppSettings updatedSettings)
         {
+            // Download tuning is process-wide and must follow settings edits immediately.
+            PocketMC.Infrastructure.Storage.DownloadTuning.Apply(updatedSettings);
             _applicationState.ApplySettings(updatedSettings);
         }
 

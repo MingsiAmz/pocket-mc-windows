@@ -279,6 +279,7 @@ namespace PocketMC.Desktop.Features.Setup
             DownloadMirrorsToggle.IsChecked = _applicationState.Settings.UseDownloadMirrors;
             CustomDownloadMirrorInput.IsEnabled = _applicationState.Settings.UseDownloadMirrors;
             CustomDownloadMirrorInput.Text = _applicationState.Settings.CustomDownloadMirror ?? string.Empty;
+            LoadDownloadTuningOptions();
 
             _isInitializing = false;
         }
@@ -291,6 +292,65 @@ namespace PocketMC.Desktop.Features.Setup
             var preference = _applicationState.Settings.Language ?? LocalizationService.SystemPreference;
             LanguageCombo.SelectedItem = options.FirstOrDefault(o => string.Equals(o.Tag, preference, StringComparison.OrdinalIgnoreCase))
                 ?? options.FirstOrDefault(o => string.Equals(o.Tag, LocalizationService.SystemPreference, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void LoadDownloadTuningOptions()
+        {
+            var threadOptions = new List<int> { 1, 2, 4, 8, 16, 32, 64, 128 };
+            int threads = Math.Clamp(_applicationState.Settings.DownloadThreads, DownloadTuning.MinThreads, DownloadTuning.MaxThreads);
+            if (!threadOptions.Contains(threads)) threadOptions.Add(threads);
+            threadOptions.Sort();
+            DownloadThreadsCombo.ItemsSource = threadOptions;
+            DownloadThreadsCombo.SelectedItem = threads;
+
+            var concurrencyOptions = new List<int> { 1, 2, 3, 4, 6, 8 };
+            int concurrency = Math.Clamp(_applicationState.Settings.DownloadConcurrency, DownloadTuning.MinConcurrency, DownloadTuning.MaxConcurrency);
+            if (!concurrencyOptions.Contains(concurrency)) concurrencyOptions.Add(concurrency);
+            concurrencyOptions.Sort();
+            DownloadConcurrencyCombo.ItemsSource = concurrencyOptions;
+            DownloadConcurrencyCombo.SelectedItem = concurrency;
+        }
+
+        private void DownloadThreadsCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || DownloadThreadsCombo.SelectedItem is not int value) return;
+
+            var settings = _applicationState.Settings;
+            if (settings.DownloadThreads == value) return;
+
+            int previous = settings.DownloadThreads;
+            settings.DownloadThreads = value;
+            try
+            {
+                _settingsManager.Save(settings);
+            }
+            catch (Exception ex)
+            {
+                settings.DownloadThreads = previous;
+                DownloadThreadsCombo.SelectedItem = previous;
+                _dialogService.ShowMessage(L.T("Settings Error"), ex.Message, DialogType.Error);
+            }
+        }
+
+        private void DownloadConcurrencyCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || DownloadConcurrencyCombo.SelectedItem is not int value) return;
+
+            var settings = _applicationState.Settings;
+            if (settings.DownloadConcurrency == value) return;
+
+            int previous = settings.DownloadConcurrency;
+            settings.DownloadConcurrency = value;
+            try
+            {
+                _settingsManager.Save(settings);
+            }
+            catch (Exception ex)
+            {
+                settings.DownloadConcurrency = previous;
+                DownloadConcurrencyCombo.SelectedItem = previous;
+                _dialogService.ShowMessage(L.T("Settings Error"), ex.Message, DialogType.Error);
+            }
         }
 
         private void ToggleUseDownloadMirrors_Changed(object sender, RoutedEventArgs e)

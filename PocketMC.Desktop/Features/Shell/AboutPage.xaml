@@ -319,8 +319,55 @@
                                     </StackPanel>
                                 </Grid>
                             </ui:Button>
-                        </WrapPanel>
 
+                            <ui:Button Click="OpenMingsiAmzGitHub_Click"
+                                       Appearance="Secondary"
+                                       Padding="8,6"
+                                       CornerRadius="8"
+                                       Cursor="Hand"
+                                       ToolTip="{loc:Tr 'MingsiAmz · Contributor (Chinese localization, mirrors, hybrid servers)'}"
+                                       Width="210"
+                                       Height="54"
+                                       HorizontalContentAlignment="Left"
+                                       Margin="0,0,10,10">
+                                <Grid VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Grid.Column="0" Width="38" Height="38" Margin="0,0,10,0" VerticalAlignment="Center">
+                                        <Border Width="38" Height="38"
+                                                CornerRadius="19"
+                                                SnapsToDevicePixels="True"
+                                                UseLayoutRounding="True">
+                                            <Border.Clip>
+                                                <EllipseGeometry Center="19,19" RadiusX="19" RadiusY="19"/>
+                                            </Border.Clip>
+                                            <Image x:Name="ImgMingsiAmzAvatar"
+                                                   Source="pack://application:,,,/Assets/avatar_mingsiamz.png"
+                                                   Width="38" Height="38"
+                                                   Stretch="UniformToFill"
+                                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        </Border>
+                                        <Ellipse Width="38" Height="38"
+                                                 Stroke="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                                 StrokeThickness="1"/>
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="MingsiAmz"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                        <TextBlock Text="{loc:Tr 'Contributor'}"
+                                                   FontSize="11"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                   Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </ui:Button>
+                        </WrapPanel>
                         <!-- Subsection: Donators -->
                         <TextBlock Text="{loc:Tr 'Donators'}"
                                    FontSize="13"

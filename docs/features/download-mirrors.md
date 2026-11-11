@@ -63,3 +63,24 @@ The list is part of the remote-overridable config, so tunnels can be swapped wit
 
 `PocketMC.Infrastructure.Tests/Storage/DownloadMirrorServiceTests.cs` covers candidate ordering,
 template parsing, BMCLAPI mapping, cooldown behaviour, and localhost bypass.
+
+## Segmented downloads
+
+- `DownloadTuning` caps parallel range segments per file (1–128, default 8) and concurrent files (1–8, default 3).
+- `DownloaderService` splits any fresh download of ≥1 MB into HTTP `Range` segments and writes them with `RandomAccess` into one preallocated `.partial` file.
+- Servers that answer a range request with `200` (or a mismatched `Content-Range`) trigger an automatic fallback to the original single-stream path, so mirrors/proxies without range support still work.
+- Interrupted segmented downloads restart from scratch; the resume path stays single-stream because sparse partials cannot be trusted.
+- Settings live in `AppSettings.DownloadThreads` / `DownloadConcurrency`, edited under App Settings → Downloads & Mirrors (“线程数：”, “同时下载任务：”). `ShellStartupCoordinator` pushes changes into `DownloadTuning` immediately.
+
+## Forge / NeoForge installer libraries
+
+The Forge/NeoForge installer is a separate Java process, so the .NET HTTP pipeline cannot redirect it.
+Before launching it, `InstallerMirrorPatcher` copies `installer.jar` to `installer.mirrored.jar` and rewrites the download
+URLs inside `version.json` / `install_profile.json`:
+
+- `https://libraries.minecraft.net/...` → `{maven mirror}/...`
+- `https://maven.neoforged.net/releases/...`, `https://mirrors.neoforged.net/releases/...` → `{maven mirror}/...`
+- `https://maven.minecraftforge.net/...`, `https://files.minecraftforge.net/maven/...` → `{maven mirror}/...`
+
+The mirror list lives in `pocketmc.yml` as `download_maven_mirrors` (default `https://bmclapi2.bangbang93.com/maven`,
+which mirrors Mojang libraries and NeoForge artifacts). When patch preparation fails the original installer is used unchanged.

@@ -32,6 +32,10 @@ namespace PocketMC.Domain.Models
         // Download acceleration through mirror tunnels
         public bool UseDownloadMirrors { get; set; } = true;
         public string? CustomDownloadMirror { get; set; }
+        /// <summary>Parallel HTTP range segments per file; 1 disables segmented download.</summary>
+        public int DownloadThreads { get; set; } = 8;
+        /// <summary>Files downloaded concurrently when a batch is requested.</summary>
+        public int DownloadConcurrency { get; set; } = 3;
         public string AccentColorMode { get; set; } = "Custom";
         public string? CustomAccentColor { get; set; } = "#008B00";
         public bool HasMigratedToGreenWallpaperBlurTheme { get; set; }

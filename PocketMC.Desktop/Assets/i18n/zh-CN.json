@@ -496,6 +496,7 @@
     "Downloading...": "下载中…",
     "Downloads & Mirrors": "下载与镜像",
     "Duration in seconds to alert online players before the reboot begins.": "重启开始前通知在线玩家的持续秒数。",
+    "Each file is split into range segments; simultaneous downloads run several files at once. Higher values use more bandwidth.": "单个文件按 HTTP 范围分段并行下载；同时下载任务指多个文件并行下载。数值越高占用带宽越多。",
     "Easy": "简单",
     "Edit MOTD": "编辑 MOTD",
     "Edit Port": "编辑端口",
@@ -1250,6 +1251,7 @@
     "Side unknown": "未知端",
     "Simple Voice Chat is active on this server.": "此服务器已启用 Simple Voice Chat。",
     "Simulation Distance:": "模拟距离：",
+    "Simultaneous downloads:": "同时下载任务：",
     "Skip the confirmation dialog and always generate summaries automatically.": "跳过确认对话框，始终自动生成摘要。",
     "Skipped {0} binary or transient file(s).": "已跳过 {0} 个二进制文件或临时文件。",
     "Software Updates": "软件更新",
@@ -1356,6 +1358,7 @@
     "This folder holds your Minecraft server instances, Java/PHP runtimes, and network tunnel binaries.": "此文件夹存放你的 Minecraft 服务器实例、Java/PHP 环境依赖和网络隧道程序。",
     "This may take a few minutes depending on your connection.": "这可能需要几分钟，具体取决于你的网络连接。",
     "This will download and COMPLETELY OVERWRITE current server files with the backup {0} from {1}. Continue?": "这将从 {1} 下载备份 {0}，并完全覆盖当前服务器文件。是否继续？",
+    "Threads:": "线程数：",
     "Tick Distance:": "Tick 距离：",
     "Time (24h):": "时间（24 小时制）：",
     "Tip: Running servers are expanded automatically. Click 'View Console / Manage' on a server to interact with it directly.": "提示：运行中的服务器会自动展开。点击服务器上的“查看控制台 / 管理”可直接与其交互。",
@@ -1590,6 +1593,8 @@
     "✗ Blocked": "✗ 已封禁",
     "✗ CORRUPT — checksum mismatch!": "✗ 已损坏 — 校验和不匹配！",
     "✗ Failed": "✗ 失败",
-    "❌ Failed to generate bundle: {0}": "❌ 生成捆绑包失败：{0}"
+    "❌ Failed to generate bundle: {0}": "❌ 生成捆绑包失败：{0}",
+    "Contributor": "贡献者",
+    "MingsiAmz · Contributor (Chinese localization, mirrors, hybrid servers)": "MingsiAmz · 贡献者（中文汉化、下载镜像、混合端支持）"
   }
 }
