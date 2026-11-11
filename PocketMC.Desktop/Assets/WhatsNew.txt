@@ -1,4 +1,4 @@
-VERSION=1.9.11
+VERSION=1.9.12
 
 [NEW FEATURES]
 PocketMC is now available in Simplified Chinese. Switch languages in Settings > Language & Region, or add your own language pack under i18n.
@@ -14,3 +14,4 @@ The Runtimes section is now called Downloads.
 
 [FIXES & STABILITY]
 Downloads resume from where they stopped and verify hashes after every mirror hop.
+Fixed a crash when opening Settings > Backups caused by a malformed size summary format string.

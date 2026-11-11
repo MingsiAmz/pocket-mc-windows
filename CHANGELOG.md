@@ -25,6 +25,21 @@ This changelog is organized from newest to oldest and rewritten from release-to-
 
 ---
 
+## v1.9.12 - Settings Crash Fix
+
+### Summary
+
+v1.9.12 fixes a crash introduced in v1.9.11 when opening Settings > Backups. The localized size summary accidentally embedded a C# expression in the format string, so `string.Format` threw `FormatException` while loading the settings page.
+
+### Fixes
+
+- Backup size summary and Playit console counters now use numbered placeholders with real arguments.
+- Corrected the corresponding zh-CN entries and removed the malformed keys.
+- `LocalizationService.Format` now logs and falls back to the unformatted pattern instead of throwing on the UI thread.
+- Added a regression test for malformed placeholders.
+
+---
+
 ## v1.9.11 - Localization, Download Mirrors & Hybrid Server Support
 
 ### Summary
