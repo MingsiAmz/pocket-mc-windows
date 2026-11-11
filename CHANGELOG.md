@@ -4,6 +4,8 @@ This changelog is organized from newest to oldest and rewritten from release-to-
 
 ## Diff Analysis Summary
 
+- `v1.9.14...v1.9.15`: Introduces the two-level server version picker with instant loader build refresh, segmented multi-threaded downloads with configurable threads and simultaneous downloads, mirror settings on the version update page, Maven-mirror rewriting for Forge/NeoForge installers, and the MingsiAmz contributor card.
+
 - `v1.9.9...v1.9.10`: Adds in-app remote News, expands local Ollama model management, checks and repairs incompatible Playit runtimes, migrates settings to a structured format while retaining legacy compatibility, and fixes maximized-window restoration.
 
 - `v1.9.8...v1.9.9`: Focuses on scheduled server reboot automation with in-game warnings, built-in Ollama local and cloud model manager with progress tracking, persistent AI session summaries, seamless detail page navigation resumption, add-on card three-dot context menus, Playit v1.0.10 agent upgrade with dedicated binary console, customizable Discord Rich Presence with live preview, wallpaper theme blur and dimming controls, process concurrency and file locking stabilization, window geometry remembrance, and centralized configuration architecture.
@@ -22,6 +24,27 @@ This changelog is organized from newest to oldest and rewritten from release-to-
 - `v1.6.2...v1.6.9`: 53 commits focused on player management, server settings profiles, Bedrock/PocketMine parity, add-on update workflows, runtime download gating, console intelligence, Playit agent stability, and production workflow cleanup.
 - `v1.4.0...v1.5.4`: 120 commits focused on NeoForge support, marketplace dependency resolution, port reliability, cross-play networking, automated Playit setup, Java runtime lifecycle management, and release infrastructure.
 - `v1.0.0...v1.4.0`: 39 commits focused on turning the early desktop shell into a broader multi-protocol server manager with Bedrock, PocketMine, diagnostics, graceful lifecycle handling, Velopack packaging, and stronger infrastructure.
+
+---
+
+## v1.9.15 - Version Picker, Segmented Downloads & Installer Mirrors
+
+### Summary
+
+v1.9.15 rebuilds the server version picker around a two-level selection (Minecraft version first, loader build second) without reloads, adds segmented multi-threaded downloads with configurable thread and concurrency limits, and finally routes Forge/NeoForge installer library downloads through the Maven mirror so installations succeed on networks where `maven.neoforged.net` is unreachable.
+
+### Added
+
+- **Two-level version picker**: the server update card lists every Minecraft release; choosing one immediately refreshes the loader build list below it, and the loader update card reuses that selection instead of asking for the parent version twice.
+- **Mirror controls in server settings**: the version update page gains a download-mirror toggle and a custom mirror field, saved with the instance settings.
+- **Segmented downloads**: large files are split into up to 128 parallel ranges with a configurable "Threads" and "Simultaneous downloads" limit, falling back to a single stream when the server ignores Range requests.
+- **MingsiAmz contributor entry** on the About page for the Chinese localization, download mirrors and hybrid server work.
+
+### Fixes
+
+- Forge/NeoForge installer library downloads are rewritten to the Maven mirror (`download_maven_mirrors`), fixing `SocketTimeoutException` failures when `maven.neoforged.net` is blocked.
+- Mojang `libraries.minecraft.net` and `resources.download.minecraft.net` downloads now map to the mirror's `/maven` and `/assets` layouts instead of returning 404.
+- The installer patcher preserves the original installer when rewriting fails, so standard installations are unaffected.
 
 ---
 

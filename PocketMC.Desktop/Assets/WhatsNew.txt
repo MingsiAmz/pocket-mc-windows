@@ -1,17 +1,17 @@
-VERSION=1.9.12
+VERSION=1.9.15
 
 [NEW FEATURES]
-PocketMC is now available in Simplified Chinese. Switch languages in Settings > Language & Region, or add your own language pack under i18n.
+Server version updates now pick the Minecraft version first, then show only the loader builds that belong to it. The loader card reuses the same selection, so you no longer choose the parent version twice.
 
-Server downloads now fall back through multiple mirrors (GitHub accelerators and BMCLAPI) and retry automatically, so a blocked or slow network no longer stops an install. Add your own mirror in Settings > Downloads & Mirrors.
+Large downloads are split into parallel segments. Set "Threads" and "Simultaneous downloads" in Settings > Downloads & Mirrors to match your connection (up to 128 threads).
 
-PocketMC now recognizes hybrid server software such as Mohist, Arclight, Magma, CatServer, Purpur, Spigot and CraftBukkit when importing or launching an existing server folder.
+The server update page now has a download mirror toggle and a custom mirror field, so version files and mod updates can use your own accelerator.
+
+Forge and NeoForge installations now download libraries through a Maven mirror, so first-time installs work even when maven.neoforged.net is unreachable.
 
 [IMPROVEMENTS]
-Forge and Vanilla servers can now be created down to Minecraft 1.7.10.
-
-The Runtimes section is now called Downloads.
+The About page lists MingsiAmz as a contributor for the Chinese localization, download mirrors and hybrid server support.
 
 [FIXES & STABILITY]
-Downloads resume from where they stopped and verify hashes after every mirror hop.
-Fixed a crash when opening Settings > Backups caused by a malformed size summary format string.
+Fixed mirror 404s for Mojang libraries and assets by mapping them to the mirror's /maven and /assets layouts.
+If the installer mirror patch fails, the original Forge/NeoForge installer is used unchanged.

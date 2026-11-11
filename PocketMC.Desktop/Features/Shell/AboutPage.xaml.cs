@@ -158,8 +158,7 @@ namespace PocketMC.Desktop.Features.Shell
                 await Task.WhenAll(
                     TryLoadOnlineAvatarAsync(ImgDivyAvatar, "https://github.com/divyviradiya2.png?size=256"),
                     TryLoadOnlineAvatarAsync(ImgSahajAvatar, "https://github.com/SizWinz.png?size=256"),
-                    TryLoadOnlineAvatarAsync(ImgJohndinglesinAvatar, "https://github.com/Johndinglesin.png?size=256"),
-                    TryLoadOnlineAvatarAsync(ImgMingsiAmzAvatar, "https://github.com/MingsiAmz.png?size=256")
+                    TryLoadOnlineAvatarAsync(ImgJohndinglesinAvatar, "https://github.com/Johndinglesin.png?size=256")
                 );
             }
             catch
